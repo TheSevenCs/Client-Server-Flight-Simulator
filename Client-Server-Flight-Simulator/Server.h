@@ -2,15 +2,22 @@
 #include <vector>
 #include "../Client/Client.h"
 #include "Flight.h"
+#include "Server.h"
+#include "Flight.h"
+#include "../Client/TelemetryData.h"
+#include "DataParser.h"
+
 
 class Server {
-private:
-    std::vector<Client> clients;
-    std::vector<Flight> flightData;
-
 public:
     void start(int port);
-    void acceptConnections();
     void receiveData();
+
+private:
+    void acceptConnections();
     void storeFlightData(const Flight& data);
+
+    int port;
+    std::vector<Client> clients;
+    std::vector<Flight> flightData;
 };
