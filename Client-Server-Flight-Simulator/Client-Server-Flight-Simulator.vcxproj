@@ -127,6 +127,12 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="DataParser.cpp" />
+    <ClCompile Include="Flight.cpp" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="DataParser.h" />
+    <ClInclude Include="Flight.h" />
     <ClCompile Include="server.cpp" />
   </ItemGroup>
   <ItemGroup>
