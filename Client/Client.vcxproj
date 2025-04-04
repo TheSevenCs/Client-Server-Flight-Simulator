@@ -18,6 +18,22 @@
       <Platform>x64</Platform>
     </ProjectConfiguration>
   </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="Aircraft.h" />
+    <ClInclude Include="Client.h" />
+    <ClInclude Include="DataTransmitter.h" />
+    <ClInclude Include="SocketDataTransmitter.h" />
+    <ClInclude Include="TelemetryData.h" />
+    <ClInclude Include="UniqueIDManager.h" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="Aircraft.cpp" />
+    <ClCompile Include="Client.cpp" />
+    <ClCompile Include="main.cpp" />
+    <ClCompile Include="SocketDataTransmitter.cpp" />
+    <ClCompile Include="TelemetryData.cpp" />
+    <ClCompile Include="UniqueIDManager.cpp" />
+  </ItemGroup>
   <PropertyGroup Label="Globals">
     <VCProjectVersion>17.0</VCProjectVersion>
     <Keyword>Win32Proj</Keyword>
@@ -126,12 +142,6 @@
       <GenerateDebugInformation>true</GenerateDebugInformation>
     </Link>
   </ItemDefinitionGroup>
-  <ItemGroup>
-    <ClCompile Include="DataTransmitter.cpp" />
-  </ItemGroup>
-  <ItemGroup>
-    <ClInclude Include="DataTransmitter.h" />
-  </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
   </ImportGroup>

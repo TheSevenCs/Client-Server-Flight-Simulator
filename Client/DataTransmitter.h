@@ -1,19 +1,13 @@
 #pragma once
+#include <vector>
 #include <string>
-#include <winsock2.h>
-
-#pragma comment(lib, "ws2_32.lib") 
 
 class DataTransmitter {
-private:
-    SOCKET socketFD;
-    WSADATA wsaData;
-
 public:
-    DataTransmitter();
-    ~DataTransmitter();
-
-    void connectToServer(const std::string& ip, int port);
-    void send(const std::string& data) const;
-    std::string receive() const;
+    virtual ~DataTransmitter() = default;
+    virtual bool connect(const std::string& serverIP, int port) = 0;
+    virtual void disconnect() = 0;
+    virtual bool send(const std::vector<char>& data) = 0;
+    virtual bool receive(std::vector<char>& data) = 0;
+    virtual bool isConnected() const = 0;
 };
