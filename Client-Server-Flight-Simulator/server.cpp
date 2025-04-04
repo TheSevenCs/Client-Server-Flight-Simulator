@@ -13,6 +13,12 @@ std::mutex flightDataMutex;
 void Server::start(int port) {
     this->port = port;
     std::cout << "Server started on port: " << port << std::endl;
+    WSADATA wsaData;
+    int wsaResult = WSAStartup(MAKEWORD(2, 2), &wsaData);
+    if (wsaResult != 0) {
+        std::cerr << "WSAStartup failed: " << wsaResult << std::endl;
+        return;
+    }
     acceptConnections();
 }
 
