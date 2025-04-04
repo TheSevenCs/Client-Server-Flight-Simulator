@@ -135,6 +135,7 @@
   <ItemGroup>
     <ClInclude Include="DataParser.h" />
     <ClInclude Include="Flight.h" />
+    <ClCompile Include="main.cpp" />
     <ClCompile Include="server.cpp" />
   </ItemGroup>
   <ItemGroup>
