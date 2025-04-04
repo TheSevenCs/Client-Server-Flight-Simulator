@@ -133,6 +133,10 @@
   <ItemGroup>
     <ClInclude Include="DataParser.h" />
     <ClInclude Include="Flight.h" />
+    <ClCompile Include="server.cpp" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="Server.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
