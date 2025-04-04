@@ -139,3 +139,24 @@ void Client::setAircraft(const Aircraft& aircraft) {
 bool Client::isServerConnected() const {
     return isConnected && transmitter->isConnected();
 }
+
+Client::Client(Client&& other) noexcept
+    : serverIP(std::move(other.serverIP)),
+    serverPort(other.serverPort),
+    isConnected(other.isConnected),
+    telemetryFilePath(std::move(other.telemetryFilePath)),
+    transmitter(std::move(other.transmitter)),
+    aircraft(std::move(other.aircraft)) {
+}
+
+Client& Client::operator=(Client&& other) noexcept {
+    if (this != &other) {
+        serverIP = std::move(other.serverIP);
+        serverPort = other.serverPort;
+        isConnected = other.isConnected;
+        telemetryFilePath = std::move(other.telemetryFilePath);
+        transmitter = std::move(other.transmitter);
+        aircraft = std::move(other.aircraft);
+    }
+    return *this;
+}

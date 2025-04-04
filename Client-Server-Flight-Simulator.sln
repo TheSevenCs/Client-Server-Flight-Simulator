@@ -4,6 +4,9 @@ Microsoft Visual Studio Solution File, Format Version 12.00
 VisualStudioVersion = 17.12.35506.116
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "Client-Server-Flight-Simulator", "Client-Server-Flight-Simulator\Client-Server-Flight-Simulator.vcxproj", "{D2CEA7FA-2FFE-4AD5-AFD4-AC941E6F9B83}"
+	ProjectSection(ProjectDependencies) = postProject
+		{76CC05BB-0A45-4334-8CB4-BD0147350E20} = {76CC05BB-0A45-4334-8CB4-BD0147350E20}
+	EndProjectSection
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "Client", "Client\Client.vcxproj", "{76CC05BB-0A45-4334-8CB4-BD0147350E20}"
 EndProject

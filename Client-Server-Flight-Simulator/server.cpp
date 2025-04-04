@@ -14,8 +14,8 @@ void Server::acceptConnections() {
     Aircraft aircraft(1001, "SimulatedJet");
     aircraft.setInitialFuel(5000.0);
     client.setAircraft(aircraft);
+    clients.push_back(std::move(client));
 
-    clients.push_back(client);
 }
 
 void Server::receiveData() {
