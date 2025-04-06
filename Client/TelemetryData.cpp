@@ -1,8 +1,8 @@
 #define _CRT_SECURE_NO_WARNINGS
-
 #include "TelemetryData.h"
 #include <sstream>
 #include <iomanip>
+#include <cstring>
 
 TelemetryData::TelemetryData()
     : timestamp(std::chrono::system_clock::now()), fuelRemaining(0.0), aircraftID(-1) {
@@ -27,19 +27,22 @@ int TelemetryData::getAircraftID() const {
 bool TelemetryData::packetize() {
     packetizedData.clear();
 
-    // Header - 4 bytes for aircraft ID
-    char* idPtr = reinterpret_cast<char*>(&aircraftID);
-    packetizedData.insert(packetizedData.end(), idPtr, idPtr + sizeof(aircraftID));
+    // Send packet format: [4-byte aircraft ID] [8-byte timestamp] [8-byte fuel quantity]
 
-    // 8 bytes for timestamp (convert to milliseconds since epoch)
-    auto epochMillis = std::chrono::duration_cast<std::chrono::milliseconds>(
+    // Adjust buffer size to accommodate all data
+    packetizedData.resize(sizeof(int) + sizeof(int64_t) + sizeof(double));
+
+    // Add Aircraft ID (4 bytes)
+    std::memcpy(packetizedData.data(), &aircraftID, sizeof(aircraftID));
+
+    // Add timestamp (8 bytes) - convert to milliseconds
+    int64_t timeMs = std::chrono::duration_cast<std::chrono::milliseconds>(
         timestamp.time_since_epoch()).count();
-    char* timePtr = reinterpret_cast<char*>(&epochMillis);
-    packetizedData.insert(packetizedData.end(), timePtr, timePtr + sizeof(epochMillis));
+    std::memcpy(packetizedData.data() + sizeof(aircraftID), &timeMs, sizeof(timeMs));
 
-    // 8 bytes for fuel remaining
-    char* fuelPtr = reinterpret_cast<char*>(&fuelRemaining);
-    packetizedData.insert(packetizedData.end(), fuelPtr, fuelPtr + sizeof(fuelRemaining));
+    // Add Fuel Amount (8 bytes)
+    std::memcpy(packetizedData.data() + sizeof(aircraftID) + sizeof(timeMs),
+        &fuelRemaining, sizeof(fuelRemaining));
 
     return true;
 }
@@ -60,7 +63,7 @@ TelemetryData TelemetryData::depacketize(const std::vector<char>& data) {
     std::memcpy(&aircraftID, data.data() + offset, sizeof(aircraftID));
     offset += sizeof(aircraftID);
 
-    // Extract timestamp
+    // Extract timestamps
     int64_t epochMillis;
     std::memcpy(&epochMillis, data.data() + offset, sizeof(epochMillis));
     offset += sizeof(epochMillis);
@@ -68,7 +71,7 @@ TelemetryData TelemetryData::depacketize(const std::vector<char>& data) {
     std::chrono::system_clock::time_point timestamp =
         std::chrono::system_clock::time_point(std::chrono::milliseconds(epochMillis));
 
-    // Extract fuel remaining
+    // Fuel extraction
     double fuelRemaining;
     std::memcpy(&fuelRemaining, data.data() + offset, sizeof(fuelRemaining));
 

@@ -1,24 +1,37 @@
 #pragma once
-#include <vector>
-#include "../Client/Client.h"
-#include "Flight.h"
-#include "Server.h"
-#include "../Client/TelemetryData.h"
-#include "DataParser.h"
+#ifndef SERVER_H
+#define SERVER_H
 
+#include <vector>
+#include <map>
+#include <mutex>
+#include <string>
+#include "Flight.h"
 
 class Server {
 public:
+    Server();
+    ~Server();
+
     void start(int port);
-    void acceptConnections();
-    void handleClient(int clientSocket);
-    void receiveData();
-    void storeFlightData(const Flight&);
+    void stop();
 
 private:
     int port;
-    std::vector<Client> clients;
-    std::vector<Flight> flightData;
+    int serverSocket;
+    bool running;
+    std::map<int, Flight> activeFlights;  // Active flights, indexed by aircraft ID
+    std::mutex flightsMutex;
 
-    void handleClient(Client& client);
+    void acceptConnections();
+    void handleClient(int clientSocket);
+    void storeFlightData(const Flight& flight);
+
+    // Parsing telemetry data from network packets
+    std::pair<int, std::pair<std::string, double>> parseTelemPacket(const std::vector<char>& packet);
+
+    // Get or create a Flight object associated with a specific aircraft ID
+    Flight& getOrCreateFlight(int aircraftId);
 };
+
+#endif

@@ -63,17 +63,9 @@ bool SocketDataTransmitter::send(const std::vector<char>& data) {
         return false;
     }
 
-    // Send data size first
-    int dataSize = static_cast<int>(data.size());
-    int bytesSent = ::send(socket, reinterpret_cast<char*>(&dataSize), sizeof(dataSize), 0);
-    if (bytesSent != sizeof(dataSize)) {
-        std::cerr << "Failed to send data size: " << WSAGetLastError() << std::endl;
-        return false;
-    }
-
-    // Send actual data
-    bytesSent = ::send(socket, data.data(), dataSize, 0);
-    if (bytesSent != dataSize) {
+    // Send packets directly without size information
+    int bytesSent = ::send(socket, data.data(), data.size(), 0);
+    if (bytesSent != data.size()) {
         std::cerr << "Failed to send all data: " << WSAGetLastError() << std::endl;
         return false;
     }

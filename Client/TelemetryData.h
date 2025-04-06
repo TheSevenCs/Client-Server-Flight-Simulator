@@ -1,4 +1,7 @@
 #pragma once
+#ifndef TELEMETRYDATA_H
+#define TELEMETRYDATA_H
+
 #include <chrono>
 #include <vector>
 #include <string>
@@ -24,3 +27,5 @@ public:
 
     std::string toString() const;
 };
+
+#endif

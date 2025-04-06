@@ -1,4 +1,7 @@
 #pragma once
+#ifndef CLIENT_H
+#define CLIENT_H
+
 #include "Aircraft.h"
 #include "TelemetryData.h"
 #include "DataTransmitter.h"
@@ -17,10 +20,6 @@ private:
 public:
     Client(const std::string& serverIP = "127.0.0.1", int serverPort = 8080);
     ~Client();
-    Client(const Client&) = delete;
-    Client& operator=(const Client&) = delete;
-    Client(Client&&) noexcept;
-    Client& operator=(Client&&) noexcept;
 
     bool initialize(const std::string& telemetryFilePath);
     bool connectToServer();
@@ -31,3 +30,5 @@ public:
     void setAircraft(const Aircraft& aircraft);
     bool isServerConnected() const;
 };
+
+#endif

@@ -13,6 +13,7 @@ private:
     std::chrono::system_clock::time_point endTime;
     double fuelConsumed;
     std::vector<double> fuelData;
+    double averageFuelConsumption;
 
 public:
     Flight(int id);
@@ -24,8 +25,10 @@ public:
     void calculateFuelConsumption();
     void saveData(const std::string& filename) const;
 
+    int getFlightID() const;
+    double getFuelConsumed() const;
+    double getAverageFuelConsumption() const;
     std::string getFlightDetails() const;
 };
 
 #endif
-

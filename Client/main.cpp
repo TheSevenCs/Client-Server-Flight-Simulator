@@ -3,11 +3,11 @@
 #include <string>
 
 int main(int argc, char* argv[]) {
-    std::string serverIP = "127.0.0.1";  // Default IP
-    int serverPort = 8080;              // Default port
+    std::string serverIP = "127.0.0.1";  // default IP
+    int serverPort = 5000;              // default port
     std::string telemetryFile = "";
 
-    // Parse command line arguments
+    // Parsing command line arguments
     for (int i = 1; i < argc; i++) {
         std::string arg = argv[i];
 
@@ -24,27 +24,27 @@ int main(int argc, char* argv[]) {
             i++;
         }
         else if (telemetryFile.empty()) {
-            // Assume it's the telemetry file if no other parameter is specified
+            // Assuming it is a telemetry file (if no other parameters are specified)
             telemetryFile = arg;
         }
     }
 
-    // Check if telemetry file is provided
+    // Check if telemetry files are available
     if (telemetryFile.empty()) {
         std::cout << "Usage: Client.exe [--ip <server_ip>] [--port <server_port>] --file <telemetry_file>" << std::endl;
         return 1;
     }
 
-    // Create client
+    // Create Client
     Client client(serverIP, serverPort);
 
-    // Initialize with telemetry file
+    // Initialize Telemetry File
     if (!client.initialize(telemetryFile)) {
         std::cerr << "Failed to initialize client with telemetry file." << std::endl;
         return 1;
     }
 
-    // Connect to server
+    // Connecting to the server
     std::cout << "Connecting to server at " << serverIP << ":" << serverPort << "..." << std::endl;
     if (!client.connectToServer()) {
         std::cerr << "Failed to connect to server." << std::endl;
@@ -54,14 +54,14 @@ int main(int argc, char* argv[]) {
     std::cout << "Connected to server. Aircraft ID: " << client.getAircraft().getID() << std::endl;
     std::cout << "Processing telemetry file: " << telemetryFile << std::endl;
 
-    // Process telemetry file
+    // Processing of telemetry files
     if (!client.processFile()) {
         std::cerr << "Failed to process telemetry file." << std::endl;
         client.disconnectFromServer();
         return 1;
     }
 
-    // Disconnect from server
+    // Disconnect from the server
     client.disconnectFromServer();
     std::cout << "Client disconnected. Exiting." << std::endl;
 

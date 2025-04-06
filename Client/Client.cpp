@@ -1,19 +1,22 @@
+#define _CRT_SECURE_NO_WARNINGS
 #include "Client.h"
-#include "UniqueIDManager.h"
 #include "SocketDataTransmitter.h"
+#include "UniqueIDManager.h"
 #include <fstream>
 #include <sstream>
 #include <iostream>
 #include <chrono>
 #include <thread>
+#include <algorithm>
+#include <ctime>
 
 Client::Client(const std::string& serverIP, int serverPort)
     : serverIP(serverIP), serverPort(serverPort), isConnected(false) {
 
-    // Create a socket data transmitter
+  
     transmitter = std::make_unique<SocketDataTransmitter>();
 
-    // Create an aircraft and assign a unique ID
+    // 创建飞机并分配唯一ID
     int uniqueID = UniqueIDManager::getInstance()->generateUniqueID();
     aircraft = Aircraft(uniqueID);
 }
@@ -25,22 +28,32 @@ Client::~Client() {
 bool Client::initialize(const std::string& telemetryFilePath) {
     this->telemetryFilePath = telemetryFilePath;
 
-    // Validate file exists
+    // Verify that the file exists
     std::ifstream file(telemetryFilePath);
     if (!file) {
         std::cerr << "Failed to open telemetry file: " << telemetryFilePath << std::endl;
         return false;
     }
 
-    // Read the first line to extract initial fuel if available
+  
     std::string line;
     if (std::getline(file, line)) {
-        std::istringstream iss(line);
-        std::string time;
-        double fuel;
-
-        if (iss >> time >> fuel) {
-            aircraft.setInitialFuel(fuel);
+        // file size
+        size_t firstComma = line.find(',');
+        if (firstComma != std::string::npos) {
+            size_t secondComma = line.find(',', firstComma + 1);
+            if (secondComma != std::string::npos) {
+                std::string fuelStr = line.substr(secondComma + 1);
+                fuelStr.erase(std::remove_if(fuelStr.begin(), fuelStr.end(),
+                    [](char c) { return c == ' ' || c == ',' || c == '\r' || c == '\n'; }), fuelStr.end());
+                try {
+                    double initialFuel = std::stod(fuelStr);
+                    aircraft.setInitialFuel(initialFuel);
+                }
+                catch (...) {
+                    std::cerr << "Failed to parse initial fuel value." << std::endl;
+                }
+            }
         }
     }
 
@@ -56,12 +69,16 @@ bool Client::connectToServer() {
     isConnected = transmitter->connect(serverIP, serverPort);
 
     if (isConnected) {
-        // Send initial connection packet with aircraft ID
-        TelemetryData initialData(std::chrono::system_clock::now(),
-            aircraft.getInitialFuel(),
-            aircraft.getID());
+        // Creating the initial packet
+        auto now = std::chrono::system_clock::now();
+        TelemetryData initialData(now, aircraft.getInitialFuel(), aircraft.getID());
         initialData.packetize();
-        transmitter->send(initialData.getPacketizedData());
+
+        // Send initial pack
+        if (!transmitter->send(initialData.getPacketizedData())) {
+            isConnected = false;
+            return false;
+        }
     }
 
     return isConnected;
@@ -87,26 +104,89 @@ bool Client::processFile() {
     }
 
     std::string line;
+
+    // 读取第一行（标题行）
+    std::getline(file, line);
+
+    bool isFirstLine = true;
+
     while (std::getline(file, line)) {
-        // Parse line - format: timestamp fuel_remaining
-        std::istringstream iss(line);
+        // 去除行首尾的空白字符
+        line.erase(0, line.find_first_not_of(" \t\r\n"));
+        line.erase(line.find_last_not_of(" \t\r\n") + 1);
+
+        if (line.empty()) continue;
+
         std::string timeStr;
-        double fuelRemaining;
+        std::string fuelStr;
 
-        if (iss >> timeStr >> fuelRemaining) {
-            // Create telemetry data
-            auto now = std::chrono::system_clock::now();
-            TelemetryData data(now, fuelRemaining, aircraft.getID());
+        if (isFirstLine) {
+            // 第一行格式：FUEL TOTAL QUANTITY,12_3_2023 14:56:47,47.865124
+            size_t firstComma = line.find(',');
+            if (firstComma == std::string::npos) continue;
 
-            // Transmit to server
+            size_t secondComma = line.find(',', firstComma + 1);
+            if (secondComma == std::string::npos) continue;
+
+            timeStr = line.substr(firstComma + 1, secondComma - firstComma - 1);
+            fuelStr = line.substr(secondComma + 1);
+
+            isFirstLine = false;
+        }
+        else {
+            // 后续行格式：12_3_2023 14:56:48,47.865021
+            size_t comma = line.find(',');
+            if (comma == std::string::npos) continue;
+
+            timeStr = line.substr(0, comma);
+            fuelStr = line.substr(comma + 1);
+        }
+
+        // 清理时间和燃油字符串
+        timeStr.erase(0, timeStr.find_first_not_of(" \t\r\n"));
+        timeStr.erase(timeStr.find_last_not_of(" \t\r\n") + 1);
+
+        fuelStr.erase(0, fuelStr.find_first_not_of(" \t\r\n"));
+        fuelStr.erase(fuelStr.find_last_not_of(" \t\r\n,") + 1); // 移除尾部的逗号和空白
+
+        double fuelRemaining = 0.0;
+        try {
+            fuelRemaining = std::stod(fuelStr);
+        }
+        catch (...) {
+            std::cerr << "Failed to parse fuel value: '" << fuelStr << "'" << std::endl;
+            continue; // 跳过解析失败的行
+        }
+
+        // 创建时间点 - 解析 "12_3_2023 14:56:47" 格式的时间
+        std::tm tm = {};
+        int month, day, year, hour, min, sec;
+        if (sscanf(timeStr.c_str(), "%d_%d_%d %d:%d:%d",
+            &month, &day, &year, &hour, &min, &sec) == 6) {
+            tm.tm_year = year - 1900;
+            tm.tm_mon = month - 1;
+            tm.tm_mday = day;
+            tm.tm_hour = hour;
+            tm.tm_min = min;
+            tm.tm_sec = sec;
+
+            auto time_point = std::chrono::system_clock::from_time_t(std::mktime(&tm));
+
+            // 创建遥测数据
+            TelemetryData data(time_point, fuelRemaining, aircraft.getID());
+
+            // 传输到服务器
             if (!transmitTelemetryData(data)) {
                 std::cerr << "Failed to transmit telemetry data." << std::endl;
                 file.close();
                 return false;
             }
 
-            // Small delay to simulate real-time data transmission
+            // 延迟50毫秒，模拟实时数据传输
             std::this_thread::sleep_for(std::chrono::milliseconds(50));
+        }
+        else {
+            std::cerr << "Failed to parse time: '" << timeStr << "'" << std::endl;
         }
     }
 
@@ -120,11 +200,11 @@ bool Client::transmitTelemetryData(const TelemetryData& data) {
         return false;
     }
 
-    // Packetize data
+    // Serialized data
     TelemetryData packetData = data;
     packetData.packetize();
 
-    // Send data to server
+    // Send data to the server
     return transmitter->send(packetData.getPacketizedData());
 }
 
@@ -138,25 +218,4 @@ void Client::setAircraft(const Aircraft& aircraft) {
 
 bool Client::isServerConnected() const {
     return isConnected && transmitter->isConnected();
-}
-
-Client::Client(Client&& other) noexcept
-    : serverIP(std::move(other.serverIP)),
-    serverPort(other.serverPort),
-    isConnected(other.isConnected),
-    telemetryFilePath(std::move(other.telemetryFilePath)),
-    transmitter(std::move(other.transmitter)),
-    aircraft(std::move(other.aircraft)) {
-}
-
-Client& Client::operator=(Client&& other) noexcept {
-    if (this != &other) {
-        serverIP = std::move(other.serverIP);
-        serverPort = other.serverPort;
-        isConnected = other.isConnected;
-        telemetryFilePath = std::move(other.telemetryFilePath);
-        transmitter = std::move(other.transmitter);
-        aircraft = std::move(other.aircraft);
-    }
-    return *this;
 }
