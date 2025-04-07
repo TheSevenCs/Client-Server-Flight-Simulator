@@ -7,6 +7,7 @@
 #include <mutex>
 #include <string>
 #include "Flight.h"
+#include "UniqueIDManager.h"
 
 class Server {
 public:
@@ -22,7 +23,7 @@ private:
     bool running;
     std::map<int, Flight> activeFlights;  // Active flights, indexed by aircraft ID
     std::mutex flightsMutex;
-
+    UniqueIDManager idManager;
     void acceptConnections();
     void handleClient(int clientSocket);
     void storeFlightData(const Flight& flight);

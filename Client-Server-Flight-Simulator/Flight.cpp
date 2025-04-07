@@ -11,13 +11,12 @@ Flight::Flight(int id)
 }
 
 // Setting the flight start time
-void Flight::setStartTime() {
-    startTime = std::chrono::system_clock::now();
+void Flight::setStartTime(const std::chrono::system_clock::time_point& t) {
+    startTime = t;
 }
 
-// Setting the end-of-flight time
-void Flight::setEndTime() {
-    endTime = std::chrono::system_clock::now();
+void Flight::setEndTime(const std::chrono::system_clock::time_point& t) {
+    endTime = t;
 }
 
 // Add fuel data points
