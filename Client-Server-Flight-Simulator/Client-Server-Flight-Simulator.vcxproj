@@ -108,7 +108,7 @@
     <Link>
       <SubSystem>Console</SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
-      <AdditionalDependencies>Client.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>Ws2_32.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <AdditionalLibraryDirectories>$(SolutionDir)x64\Debug\</AdditionalLibraryDirectories>
     </Link>
   </ItemDefinitionGroup>
@@ -131,12 +131,14 @@
   <ItemGroup>
     <ClCompile Include="DataParser.cpp" />
     <ClCompile Include="Flight.cpp" />
+    <ClCompile Include="UniqueIDManager.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="DataParser.h" />
     <ClInclude Include="Flight.h" />
     <ClCompile Include="main.cpp" />
     <ClCompile Include="server.cpp" />
+    <ClInclude Include="UniqueIDManager.h" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Server.h" />

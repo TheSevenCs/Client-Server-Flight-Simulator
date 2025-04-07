@@ -18,8 +18,9 @@ private:
 public:
     Flight(int id);
 
-    void setStartTime();
-    void setEndTime();
+    void setStartTime(const std::chrono::system_clock::time_point& t);
+    void setEndTime(const std::chrono::system_clock::time_point& t);
+
 
     void addFuelData(double fuel);
     void calculateFuelConsumption();
