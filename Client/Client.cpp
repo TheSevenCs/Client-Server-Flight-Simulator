@@ -116,15 +116,8 @@ bool Client::connectToServer() {
         }
 
         // 现在我们有了ID，创建初始数据包
-        auto now = std::chrono::system_clock::now();
-        TelemetryData initialData(now, aircraft.getInitialFuel(), aircraft.getID());
-        initialData.packetize();
 
-        // 发送初始数据包
-        if (!transmitter->send(initialData.getPacketizedData())) {
-            disconnectFromServer();
-            return false;
-        }
+
     }
 
     return isConnected;
@@ -151,50 +144,30 @@ bool Client::processFile() {
     }
 
     std::string line;
-
-    // ¶ÁÈ¡µÚÒ»ÐÐ£¨±êÌâÐÐ£©
-    std::getline(file, line);
-
-    bool isFirstLine = true;
-
     while (std::getline(file, line)) {
-        // È¥³ýÐÐÊ×Î²µÄ¿Õ°××Ö·û
+        // 去除行首尾的空白字符
         line.erase(0, line.find_first_not_of(" \t\r\n"));
         line.erase(line.find_last_not_of(" \t\r\n") + 1);
 
         if (line.empty()) continue;
 
-        std::string timeStr;
-        std::string fuelStr;
+        // 格式: 1_3_2023 12:35:34,33.571247,
+        size_t comma = line.find(',');
+        if (comma == std::string::npos) continue;
 
-        if (isFirstLine) {
-            // µÚÒ»ÐÐ¸ñÊ½£ºFUEL TOTAL QUANTITY,12_3_2023 14:56:47,47.865124
-            size_t firstComma = line.find(',');
-            if (firstComma == std::string::npos) continue;
+        std::string timeStr = line.substr(0, comma);
+        std::string fuelStr = line.substr(comma + 1);
 
-            size_t secondComma = line.find(',', firstComma + 1);
-            if (secondComma == std::string::npos) continue;
-
-            timeStr = line.substr(firstComma + 1, secondComma - firstComma - 1);
-            fuelStr = line.substr(secondComma + 1);
-
-            isFirstLine = false;
-        }
-        else {
-            // ºóÐøÐÐ¸ñÊ½£º12_3_2023 14:56:48,47.865021
-            size_t comma = line.find(',');
-            if (comma == std::string::npos) continue;
-
-            timeStr = line.substr(0, comma);
-            fuelStr = line.substr(comma + 1);
-        }
-
-        // ÇåÀíÊ±¼äºÍÈ¼ÓÍ×Ö·û´®
+        // 清理时间和燃油字符串
         timeStr.erase(0, timeStr.find_first_not_of(" \t\r\n"));
         timeStr.erase(timeStr.find_last_not_of(" \t\r\n") + 1);
 
         fuelStr.erase(0, fuelStr.find_first_not_of(" \t\r\n"));
-        fuelStr.erase(fuelStr.find_last_not_of(" \t\r\n,") + 1); // ÒÆ³ýÎ²²¿µÄ¶ººÅºÍ¿Õ°×
+        // 移除尾部的逗号和空白
+        size_t lastNonComma = fuelStr.find_last_not_of(",\t\r\n ");
+        if (lastNonComma != std::string::npos) {
+            fuelStr = fuelStr.substr(0, lastNonComma + 1);
+        }
 
         double fuelRemaining = 0.0;
         try {
@@ -202,10 +175,10 @@ bool Client::processFile() {
         }
         catch (...) {
             std::cerr << "Failed to parse fuel value: '" << fuelStr << "'" << std::endl;
-            continue; // Ìø¹ý½âÎöÊ§°ÜµÄÐÐ
+            continue; // 跳过解析失败的行
         }
 
-        // ´´½¨Ê±¼äµã - ½âÎö "12_3_2023 14:56:47" ¸ñÊ½µÄÊ±¼ä
+        // 创建时间点 - 解析 "1_3_2023 12:35:34" 格式的时间
         std::tm tm = {};
         int month, day, year, hour, min, sec;
         if (sscanf(timeStr.c_str(), "%d_%d_%d %d:%d:%d",
@@ -219,17 +192,17 @@ bool Client::processFile() {
 
             auto time_point = std::chrono::system_clock::from_time_t(std::mktime(&tm));
 
-            // ´´½¨Ò£²âÊý¾Ý
+            // 创建遥测数据
             TelemetryData data(time_point, fuelRemaining, aircraft.getID());
 
-            // ´«Êäµ½·þÎñÆ÷
+            // 传输到服务器
             if (!transmitTelemetryData(data)) {
                 std::cerr << "Failed to transmit telemetry data." << std::endl;
                 file.close();
                 return false;
             }
 
-            // ÑÓ³Ù50ºÁÃë£¬Ä£ÄâÊµÊ±Êý¾Ý´«Êä
+            // 延迟50毫秒，模拟实时数据传输
             std::this_thread::sleep_for(std::chrono::milliseconds(50));
         }
         else {
