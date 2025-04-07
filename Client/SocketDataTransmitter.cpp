@@ -1,4 +1,4 @@
-#include "SocketDataTransmitter.h"
+﻿#include "SocketDataTransmitter.h"
 #include <WinSock2.h>
 #include <WS2tcpip.h>
 #include <iostream>
@@ -73,28 +73,44 @@ bool SocketDataTransmitter::send(const std::vector<char>& data) {
     return true;
 }
 
-bool SocketDataTransmitter::receive(std::vector<char>& data) {
+//bool SocketDataTransmitter::receive(std::vector<char>& data) {
+//    if (!connected) {
+//        return false;
+//    }
+//
+//    // Receive data size first
+//    int dataSize = 0;
+//    int bytesReceived = ::recv(socket, reinterpret_cast<char*>(&dataSize), sizeof(dataSize), 0);
+//    if (bytesReceived != sizeof(dataSize) || dataSize <= 0) {
+//        std::cerr << "Failed to receive data size: " << WSAGetLastError() << std::endl;
+//        return false;
+//    }
+//
+//    // Resize buffer and receive data
+//    data.resize(dataSize);
+//    bytesReceived = ::recv(socket, data.data(), dataSize, 0);
+//    if (bytesReceived != dataSize) {
+//        std::cerr << "Failed to receive all data: " << WSAGetLastError() << std::endl;
+//        data.clear();
+//        return false;
+//    }
+//
+//    return true;
+//}
+
+bool SocketDataTransmitter::receive(std::vector<char>& buffer) {
     if (!connected) {
         return false;
     }
 
-    // Receive data size first
-    int dataSize = 0;
-    int bytesReceived = ::recv(socket, reinterpret_cast<char*>(&dataSize), sizeof(dataSize), 0);
-    if (bytesReceived != sizeof(dataSize) || dataSize <= 0) {
-        std::cerr << "Failed to receive data size: " << WSAGetLastError() << std::endl;
+    int bytesReceived = ::recv(socket, buffer.data(), buffer.size(), 0);
+    if (bytesReceived <= 0) {
+        std::cerr << "Failed to receive data: " << WSAGetLastError() << std::endl;
         return false;
     }
 
-    // Resize buffer and receive data
-    data.resize(dataSize);
-    bytesReceived = ::recv(socket, data.data(), dataSize, 0);
-    if (bytesReceived != dataSize) {
-        std::cerr << "Failed to receive all data: " << WSAGetLastError() << std::endl;
-        data.clear();
-        return false;
-    }
-
+    // 调整缓冲区大小以匹配接收到的数据
+    buffer.resize(bytesReceived);
     return true;
 }
 

@@ -24,7 +24,6 @@
     <ClInclude Include="DataTransmitter.h" />
     <ClInclude Include="SocketDataTransmitter.h" />
     <ClInclude Include="TelemetryData.h" />
-    <ClInclude Include="UniqueIDManager.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Aircraft.cpp" />
@@ -32,7 +31,6 @@
     <ClCompile Include="main.cpp" />
     <ClCompile Include="SocketDataTransmitter.cpp" />
     <ClCompile Include="TelemetryData.cpp" />
-    <ClCompile Include="UniqueIDManager.cpp" />
   </ItemGroup>
   <PropertyGroup Label="Globals">
     <VCProjectVersion>17.0</VCProjectVersion>
