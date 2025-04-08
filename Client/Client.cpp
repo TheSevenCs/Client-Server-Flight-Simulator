@@ -89,8 +89,8 @@ bool Client::connectToServer() {
     isConnected = transmitter->connect(serverIP, serverPort);
 
     if (isConnected) {
-        // 接收服务器分配的ID
-        std::vector<char> buffer(64, 0); // 创建足够大的缓冲区
+        // Receive the ID assigned by the server
+        std::vector<char> buffer(64, 0); // Create a large enough buffer
         bool idReceived = transmitter->receive(buffer);
 
         if (!idReceived || buffer.empty()) {
@@ -99,13 +99,13 @@ bool Client::connectToServer() {
             return false;
         }
 
-        // 解析ID (假设服务器只发送数字)
+        // Resolve the ID
         std::string idStr(buffer.begin(), buffer.end());
-        idStr = idStr.substr(0, idStr.find('\0')); // 去除尾部空字符
+        idStr = idStr.substr(0, idStr.find('\0')); // Remove trailing blank characters
 
         try {
             int id = std::stoi(idStr);
-            // 设置飞机ID
+            // Setting the aircraft ID
             aircraft.setID(id);
             std::cout << "Received ID from server: " << id << std::endl;
         }
@@ -114,9 +114,6 @@ bool Client::connectToServer() {
             disconnectFromServer();
             return false;
         }
-
-        // 现在我们有了ID，创建初始数据包
-
 
     }
 
@@ -145,25 +142,25 @@ bool Client::processFile() {
 
     std::string line;
     while (std::getline(file, line)) {
-        // 去除行首尾的空白字符
+        // Remove whitespace at the beginning and end of a line
         line.erase(0, line.find_first_not_of(" \t\r\n"));
         line.erase(line.find_last_not_of(" \t\r\n") + 1);
 
         if (line.empty()) continue;
 
-        // 格式: 1_3_2023 12:35:34,33.571247,
+        // Sample Format: 1_3_2023 12:35:34,33.571247,
         size_t comma = line.find(',');
         if (comma == std::string::npos) continue;
 
         std::string timeStr = line.substr(0, comma);
         std::string fuelStr = line.substr(comma + 1);
 
-        // 清理时间和燃油字符串
+        // Clearing time and fuel strings
         timeStr.erase(0, timeStr.find_first_not_of(" \t\r\n"));
         timeStr.erase(timeStr.find_last_not_of(" \t\r\n") + 1);
 
         fuelStr.erase(0, fuelStr.find_first_not_of(" \t\r\n"));
-        // 移除尾部的逗号和空白
+        // Remove trailing commas and whitespace
         size_t lastNonComma = fuelStr.find_last_not_of(",\t\r\n ");
         if (lastNonComma != std::string::npos) {
             fuelStr = fuelStr.substr(0, lastNonComma + 1);
@@ -175,10 +172,10 @@ bool Client::processFile() {
         }
         catch (...) {
             std::cerr << "Failed to parse fuel value: '" << fuelStr << "'" << std::endl;
-            continue; // 跳过解析失败的行
+            continue; // Skip lines that fail parsing
         }
 
-        // 创建时间点 - 解析 "1_3_2023 12:35:34" 格式的时间
+        // Creating a point in time - parsing a time in "1_3_2023 12:35:34" format
         std::tm tm = {};
         int month, day, year, hour, min, sec;
         if (sscanf(timeStr.c_str(), "%d_%d_%d %d:%d:%d",
@@ -192,17 +189,17 @@ bool Client::processFile() {
 
             auto time_point = std::chrono::system_clock::from_time_t(std::mktime(&tm));
 
-            // 创建遥测数据
+            // Creating Telemetry Data
             TelemetryData data(time_point, fuelRemaining, aircraft.getID());
 
-            // 传输到服务器
+            // Transfer to server
             if (!transmitTelemetryData(data)) {
                 std::cerr << "Failed to transmit telemetry data." << std::endl;
                 file.close();
                 return false;
             }
 
-            // 延迟50毫秒，模拟实时数据传输
+            // 50 ms latency to simulate real-time data transfer
             std::this_thread::sleep_for(std::chrono::milliseconds(50));
         }
         else {

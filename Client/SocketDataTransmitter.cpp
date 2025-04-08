@@ -109,7 +109,7 @@ bool SocketDataTransmitter::receive(std::vector<char>& buffer) {
         return false;
     }
 
-    // 调整缓冲区大小以匹配接收到的数据
+    // Adjust the buffer size to match the received data
     buffer.resize(bytesReceived);
     return true;
 }
