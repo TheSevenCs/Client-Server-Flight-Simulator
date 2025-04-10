@@ -14,8 +14,8 @@ public:
     // Parsing individual telemetry data rows
     static std::pair<std::string, double> parseTelemDataLine(const std::string& line);
 
-    // Extract telemetry data from binary packets
-    static std::pair<int, std::pair<std::string, double>> parseTelemPacket(const std::vector<char>& packet);
+    static std::pair<int, std::pair<int64_t, double>>
+        parseTelemPacket(const char* data, size_t length);
 
     // Retain original function for compatibility
     void extractData();

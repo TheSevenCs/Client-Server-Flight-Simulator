@@ -48,37 +48,29 @@ std::pair<std::string, double> DataParser::parseTelemDataLine(const std::string&
 }
 
 // Parsing network packets
-std::pair<int, std::pair<std::string, double>> DataParser::parseTelemPacket(const std::vector<char>& packet) {
-    // Assume packet format is: [4-byte aircraft ID][8-byte timestamp][8-byte fuel amount]
-    if (packet.size() < sizeof(int) + sizeof(int64_t) + sizeof(double)) {
-        return { -1, {"", 0.0} }; // Invalid packet
+std::pair<int, std::pair<int64_t, double>>
+DataParser::parseTelemPacket(const char* data, size_t length) {
+    if (length < sizeof(int) + sizeof(int64_t) + sizeof(double)) {
+        return { -1, {0, 0.0} }; // Invalid packet
     }
 
     int offset = 0;
 
-    // Extract aircraft ID
     int aircraftId;
-    std::memcpy(&aircraftId, packet.data() + offset, sizeof(aircraftId));
+    std::memcpy(&aircraftId, data + offset, sizeof(aircraftId));
     offset += sizeof(aircraftId);
 
-    // Extract timestamps
     int64_t epochMillis;
-    std::memcpy(&epochMillis, packet.data() + offset, sizeof(epochMillis));
+    std::memcpy(&epochMillis, data + offset, sizeof(epochMillis));
     offset += sizeof(epochMillis);
 
-    // Convert timestamps to a readable format
-    auto timePoint = std::chrono::system_clock::time_point(std::chrono::milliseconds(epochMillis));
-    auto timeT = std::chrono::system_clock::to_time_t(timePoint);
-    std::stringstream ss;
-    ss << std::put_time(std::localtime(&timeT), "%Y-%m-%d %H:%M:%S");
-    std::string timeStr = ss.str();
-
-    // Fuel extraction
     double fuelRemaining;
-    std::memcpy(&fuelRemaining, packet.data() + offset, sizeof(fuelRemaining));
+    std::memcpy(&fuelRemaining, data + offset, sizeof(fuelRemaining));
 
-    return { aircraftId, {timeStr, fuelRemaining} };
+    return { aircraftId, {epochMillis, fuelRemaining} };
 }
+
+
 
 // Keep original functions for compatibility
 void DataParser::extractData() {

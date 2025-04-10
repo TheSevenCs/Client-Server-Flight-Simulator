@@ -8,7 +8,9 @@
 // Constructor initializes flight ID and sets default fuel consumption to zero
 Flight::Flight(int id)
     : flightID(id), fuelConsumed(0.0), averageFuelConsumption(0.0) {
+    fuelData.reserve(3 * 60 * 60);  // Reserve space for ~3 hours @ 1 packet/sec
 }
+
 
 // Setting the flight start time
 void Flight::setStartTime(const std::chrono::system_clock::time_point& t) {

@@ -122,6 +122,7 @@ void Server::handleClient(int clientSocket) {
     bool connectionActive = true;
     int aircraftId = idManager.generateID();
     bool firstPacket = true;
+    int64_t lastEpochMillis = 0;
 
     // Send ID to client
     std::string idMessage = std::to_string(aircraftId) + "\n";
@@ -151,29 +152,28 @@ void Server::handleClient(int clientSocket) {
                 break;
             }
 
-            std::vector<char> dataPacket(buffer, buffer + bytesRead);
-            auto telemetryData = DataParser::parseTelemPacket(dataPacket);
+            auto telemetryData = DataParser::parseTelemPacket(buffer, bytesRead);
 
             if (telemetryData.first == aircraftId) {
-                std::string timeStr = telemetryData.second.first;
+                int64_t epochMillis = telemetryData.second.first;
                 double fuel = telemetryData.second.second;
 
                 if (firstPacket) {
-                    flight.setStartTime(parseTime(timeStr));
+                    flight.setStartTime(std::chrono::system_clock::time_point(std::chrono::milliseconds(epochMillis)));
                     firstPacket = false;
                 }
 
-                lastTimeStr = timeStr;
+                lastEpochMillis = epochMillis;
                 flight.addFuelData(fuel);
-
-                std::cout << "Aircraft " << aircraftId << ": time=" << timeStr << ", fuel=" << fuel << std::endl;
             }
+
         }
     }
 
-    if (!lastTimeStr.empty()) {
-        flight.setEndTime(parseTime(lastTimeStr));
+    if (lastEpochMillis != 0) {
+        flight.setEndTime(std::chrono::system_clock::time_point(std::chrono::milliseconds(lastEpochMillis)));
     }
+
 
     flight.calculateFuelConsumption();
     storeFlightData(flight);
@@ -201,13 +201,10 @@ Flight& Server::getOrCreateFlight(int aircraftId) {
 void Server::storeFlightData(const Flight& flight) {
     std::lock_guard<std::mutex> lock(flightsMutex);
 
-    // Save flight data to file
-    std::string filename = "Flight_ID_" + std::to_string(flight.getFlightID()) + ".txt";
+    const int id = flight.getFlightID();  // Get ID once
+    std::string filename = "Flight_ID_" + std::to_string(id) + ".txt";
+
     flight.saveData(filename);
-
     std::cout << "Flight stored: " << flight.getFlightDetails() << std::endl;
-}
-
-std::pair<int, std::pair<std::string, double>> Server::parseTelemPacket(const std::vector<char>& packet) {
-    return DataParser::parseTelemPacket(packet);
+    activeFlights.erase(id);
 }
